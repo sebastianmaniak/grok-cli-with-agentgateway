@@ -1,0 +1,43 @@
+# The Gateway, plus the cost catalog attached to it.
+#
+# Standalone equivalent: `config.modelCatalog` in ../agentgateway.yaml.
+#
+# The catalog must be attached with AgentgatewayParameters on the *Gateway*.
+# A GatewayClass-level catalog is ignored.
+#
+# Requires the `xai-costs` ConfigMap, which is generated (not committed):
+#   agctl costs import --source models.dev --providers xai --out ./costs/catalog.json
+#   kubectl -n agentgateway-system create configmap xai-costs \
+#     --from-file=catalog.json=./costs/catalog.json
+# install.sh does both.
+apiVersion: agentgateway.dev/v1alpha1
+kind: AgentgatewayParameters
+metadata:
+  name: xai-costs
+  namespace: agentgateway-system
+spec:
+  modelCatalog:
+    sources:
+    - configMap:
+        name: xai-costs
+        key: catalog.json
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: Gateway
+metadata:
+  name: agentgateway-proxy
+  namespace: agentgateway-system
+spec:
+  gatewayClassName: agentgateway
+  infrastructure:
+    parametersRef:
+      name: xai-costs
+      group: agentgateway.dev
+      kind: AgentgatewayParameters
+  listeners:
+  - name: http
+    port: 80
+    protocol: HTTP
+    allowedRoutes:
+      namespaces:
+        from: All

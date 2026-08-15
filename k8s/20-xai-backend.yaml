@@ -1,0 +1,54 @@
+# xAI backend + the /v1 route that Grok Build / curl call.
+#
+# Standalone equivalent: the `llm.models` block in ../agentgateway.yaml
+# (`provider: xai`). On Kubernetes, xAI is an OpenAI-compatible provider:
+# https://agentgateway.dev/docs/kubernetes/latest/llm/providers/openai-compatible/
+#
+# The real xAI key lives in the `xai-secret` Secret, read from the
+# `Authorization` key. That Secret is NOT in this repo — create it from your
+# shell (install.sh does it, or see ../docs/kubernetes.md).
+#
+# Do not pin `openai.model` — the client-provided model (grok-4-latest, etc.)
+# is passed through. TLS + SNI are required; without them the proxy speaks
+# plain HTTP to port 443 and Cloudflare returns 400.
+apiVersion: agentgateway.dev/v1alpha1
+kind: AgentgatewayBackend
+metadata:
+  name: xai
+  namespace: agentgateway-system
+spec:
+  ai:
+    provider:
+      openai: {}
+      host: api.x.ai
+      port: 443
+      path: /v1/chat/completions
+    routes:
+      "/v1/chat/completions": Completions
+      "/v1/models": Models
+      "*": Passthrough
+  policies:
+    auth:
+      secretRef:
+        name: xai-secret
+    tls:
+      sni: api.x.ai
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: xai
+  namespace: agentgateway-system
+spec:
+  parentRefs:
+  - name: agentgateway-proxy
+    namespace: agentgateway-system
+  rules:
+  - matches:
+    - path:
+        type: PathPrefix
+        value: /v1
+    backendRefs:
+    - name: xai
+      group: agentgateway.dev
+      kind: AgentgatewayBackend

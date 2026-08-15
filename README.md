@@ -1,10 +1,16 @@
 # Grok Build + agentgateway
 
-Run **standalone agentgateway** in front of **Grok Build** (or any OpenAI-compatible client), so the client never sees your real xAI key.
+**Grok Build** is xAI's coding agent. It runs in your terminal, reads the repo, edits files, and shells out. Out of the box it talks straight to `api.x.ai` with a key sitting in `~/.grok` or an env var. Fine for one laptop. Ugly the moment you have more than one tool, more than one model, or you actually want to know what you spent.
 
-The client talks to `http://127.0.0.1:4003/v1` with a dummy token. The gateway is the only process that holds `XAI_API_KEY`, and it is where token counts, USD cost, and traces show up. This is the setup we actually ran on one box — no cluster required.
+**agentgateway** is the proxy in the middle. It speaks the OpenAI API, so Grok Build (and curl, Cursor, anything else) thinks it is talking to a normal `/v1` endpoint. Behind that single door it can send the call to Grok, to OpenAI, to a local vLLM box, or later to MCP servers. The client never holds the real key.
 
-The kind / passthrough runbook that used to live here is still at [docs/grok-passthrough-kind.md](docs/grok-passthrough-kind.md). That path forwards the client's own `Authorization` header. This README is the other pattern: dummy inbound token, real key only on the gateway.
+That is why the gateway matters. One place to **govern** who can call what, **route** traffic to the right model, **optimize** the path, and **analyze** tokens and spend. Analytics and Logs on the admin UI are not a nice-to-have. They are the point.
+
+This repo is the standalone version we actually ran on one machine. Grok Build or curl hits `http://127.0.0.1:4003/v1` with a dummy token. The gateway is the only process that has `XAI_API_KEY`. Token counts, USD, and traces show up there. No cluster required.
+
+The older kind runbook (client holds the key, gateway just forwards `Authorization`) is still at [docs/grok-passthrough-kind.md](docs/grok-passthrough-kind.md).
+
+![Two dummy-token curls through the gateway](docs/shots/curl-run.gif)
 
 ## How it works
 
@@ -140,7 +146,7 @@ curl -sS http://127.0.0.1:4003/v1/models \
 
 This box: both returned **200**. `grok-4-latest` routed to `grok-4.3`. Answers were `4` and `Paris`.
 
-![Two curls through the gateway: 4 and Paris](docs/shots/curl-run.png)
+![Two curls through the gateway: 4 and Paris](docs/shots/curl-run.gif)
 
 Open **Analytics** and **Logs** on the admin UI. You want `CHAT` / `200` rows with provider `xai`. No key on those pages.
 
@@ -148,11 +154,15 @@ This run: **$0.0044 / 623 tokens / 2 calls**.
 
 ![agentgateway Analytics: $0.0044, 623 tokens, 2 calls](docs/shots/agw-ui.png)
 
+![Admin UI: Overview, Analytics, Logs](docs/shots/agw-costs.gif)
+
 ![agentgateway Logs: two CHAT 200 rows, grok-4-latest to grok-4.3, provider xai](docs/shots/agw-logs.png)
 
 ## Step 6: Point Grok Build at the gateway
 
 Grok Build reads `~/.grok/config.toml`. Add a custom model that talks to the gateway with the **dummy** token, not `XAI_API_KEY`.
+
+![Grok Build config.toml pointed at the gateway](docs/shots/grok-config.gif)
 
 ```toml
 [model.agw]
@@ -204,15 +214,20 @@ Switch models in the TUI with `/model` or `grok -m agw`.
 | Gateway config (no secret) | [`agentgateway.yaml`](agentgateway.yaml) |
 | Gateway launcher | [`start-agw.sh`](start-agw.sh) |
 | Kind passthrough runbook | [`docs/grok-passthrough-kind.md`](docs/grok-passthrough-kind.md) |
-| Kubernetes (dummy-token pattern) | [`docs/kubernetes.md`](docs/kubernetes.md) |
+| Kubernetes manifests | [`k8s/`](k8s/) — see [`k8s/README.md`](k8s/README.md) |
+| Kubernetes walkthrough | [`docs/kubernetes.md`](docs/kubernetes.md) |
 | Real xAI key (mode 600, never committed) | `.secrets/xai.env` |
 | Grok Build custom model | `~/.grok/config.toml` |
 
-**Captures** — all stills live in [`docs/shots/`](docs/shots/), keyed to the steps above:
+**Captures** — stills and clips live in [`docs/shots/`](docs/shots/), keyed to the steps above:
 
 | File | What |
 | --- | --- |
-| `curl-run.png` | Two dummy-token curls: `4` and `Paris` |
+| `curl-run.gif` | Two dummy-token curls: `4` and `Paris` |
+| `curl-run.png` | Same still |
+| `grok-config.gif` | `~/.grok/config.toml` — `agw` model, dummy `env_key` |
+| `agw-costs.gif` | Admin UI — Overview → Analytics → Logs |
+| `agw-logs.gif` | Analytics then Logs |
 | `agw-ui.png` | Analytics — $0.0044 / 623 tokens / 2 calls |
 | `agw-logs.png` | Logs — two `CHAT` / `200` rows, `grok-4-latest` → `grok-4.3` |
 | `agw-admin.png` | Gateway Overview |
@@ -223,6 +238,10 @@ Standalone first. No real API key in any capture.
 
 ## Next steps
 
-- **Kubernetes** — same dummy-token pattern, with a Secret instead of a mode-600 file. Walkthrough: [docs/kubernetes.md](docs/kubernetes.md).
+- **Kubernetes** — same dummy-token pattern, with a Secret instead of a mode-600 file. Manifests are in [`k8s/`](k8s/); the walkthrough is [docs/kubernetes.md](docs/kubernetes.md). Untested — we did not stand a cluster up for this repo.
+
+  ```bash
+  ./k8s/install.sh   # Gateway API + agentgateway charts, Secret, cost catalog, manifests
+  ```
 - **Kind passthrough** — client holds the key, gateway forwards `Authorization`. That is the older runbook: [docs/grok-passthrough-kind.md](docs/grok-passthrough-kind.md).
 - **MCP** — not wired in this first pass. Same gateway in the middle, later.

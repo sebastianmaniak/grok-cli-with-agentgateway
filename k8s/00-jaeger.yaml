@@ -1,0 +1,59 @@
+# Jaeger all-in-one. Receives OTLP from the gateway on 4317, UI on 16686.
+# Standalone equivalent: the `docker run ... jaegertracing/all-in-one` in the README.
+# Optional — skip this file and 30-tracing-policy.yaml if you don't want traces.
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: telemetry
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: jaeger
+  namespace: telemetry
+  labels:
+    app: jaeger
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: jaeger
+  template:
+    metadata:
+      labels:
+        app: jaeger
+    spec:
+      containers:
+      - name: jaeger
+        image: jaegertracing/all-in-one:latest
+        env:
+        - name: COLLECTOR_OTLP_ENABLED
+          value: "true"
+        ports:
+        - { name: otlp-grpc, containerPort: 4317 }
+        - { name: otlp-http, containerPort: 4318 }
+        - { name: ui, containerPort: 16686 }
+---
+# OTLP collector. This is what AgentgatewayPolicy points at.
+apiVersion: v1
+kind: Service
+metadata:
+  name: jaeger
+  namespace: telemetry
+spec:
+  selector:
+    app: jaeger
+  ports:
+  - { name: otlp-grpc, port: 4317, targetPort: 4317 }
+---
+# UI. kubectl port-forward -n telemetry svc/jaeger-ui 16686:16686
+apiVersion: v1
+kind: Service
+metadata:
+  name: jaeger-ui
+  namespace: telemetry
+spec:
+  selector:
+    app: jaeger
+  ports:
+  - { name: ui, port: 16686, targetPort: 16686 }
