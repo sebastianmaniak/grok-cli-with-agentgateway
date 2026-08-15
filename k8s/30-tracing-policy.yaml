@@ -1,0 +1,22 @@
+# Send traces to the Jaeger Service from 00-jaeger.yaml.
+#
+# Standalone equivalent: `config.tracing` in ../agentgateway.yaml.
+# Optional — skip this file if you skipped 00-jaeger.yaml.
+apiVersion: agentgateway.dev/v1alpha1
+kind: AgentgatewayPolicy
+metadata:
+  name: tracing
+  namespace: agentgateway-system
+spec:
+  targetRefs:
+  - kind: Gateway
+    name: agentgateway-proxy
+    group: gateway.networking.k8s.io
+  frontend:
+    tracing:
+      backendRef:
+        name: jaeger
+        namespace: telemetry
+        port: 4317
+        protocol: GRPC
+      randomSampling: "true"
