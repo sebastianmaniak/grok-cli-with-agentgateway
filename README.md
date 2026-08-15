@@ -6,6 +6,8 @@ The client talks to `http://127.0.0.1:4003/v1` with a dummy token. The gateway i
 
 The kind / passthrough runbook that used to live here is still at [docs/grok-passthrough-kind.md](docs/grok-passthrough-kind.md). That path forwards the client's own `Authorization` header. This README is the other pattern: dummy inbound token, real key only on the gateway.
 
+![Two dummy-token curls through the gateway](docs/shots/curl-run.gif)
+
 ## How it works
 
 ```mermaid
@@ -140,7 +142,7 @@ curl -sS http://127.0.0.1:4003/v1/models \
 
 This box: both returned **200**. `grok-4-latest` routed to `grok-4.3`. Answers were `4` and `Paris`.
 
-![Two curls through the gateway: 4 and Paris](docs/shots/curl-run.png)
+![Two curls through the gateway: 4 and Paris](docs/shots/curl-run.gif)
 
 Open **Analytics** and **Logs** on the admin UI. You want `CHAT` / `200` rows with provider `xai`. No key on those pages.
 
@@ -148,11 +150,15 @@ This run: **$0.0044 / 623 tokens / 2 calls**.
 
 ![agentgateway Analytics: $0.0044, 623 tokens, 2 calls](docs/shots/agw-ui.png)
 
+![Admin UI: Overview, Analytics, Logs](docs/shots/agw-costs.gif)
+
 ![agentgateway Logs: two CHAT 200 rows, grok-4-latest to grok-4.3, provider xai](docs/shots/agw-logs.png)
 
 ## Step 6: Point Grok Build at the gateway
 
 Grok Build reads `~/.grok/config.toml`. Add a custom model that talks to the gateway with the **dummy** token, not `XAI_API_KEY`.
+
+![Grok Build config.toml pointed at the gateway](docs/shots/grok-config.gif)
 
 ```toml
 [model.agw]
@@ -209,11 +215,15 @@ Switch models in the TUI with `/model` or `grok -m agw`.
 | Real xAI key (mode 600, never committed) | `.secrets/xai.env` |
 | Grok Build custom model | `~/.grok/config.toml` |
 
-**Captures** — all stills live in [`docs/shots/`](docs/shots/), keyed to the steps above:
+**Captures** — stills and clips live in [`docs/shots/`](docs/shots/), keyed to the steps above:
 
 | File | What |
 | --- | --- |
-| `curl-run.png` | Two dummy-token curls: `4` and `Paris` |
+| `curl-run.gif` | Two dummy-token curls: `4` and `Paris` |
+| `curl-run.png` | Same still |
+| `grok-config.gif` | `~/.grok/config.toml` — `agw` model, dummy `env_key` |
+| `agw-costs.gif` | Admin UI — Overview → Analytics → Logs |
+| `agw-logs.gif` | Analytics then Logs |
 | `agw-ui.png` | Analytics — $0.0044 / 623 tokens / 2 calls |
 | `agw-logs.png` | Logs — two `CHAT` / `200` rows, `grok-4-latest` → `grok-4.3` |
 | `agw-admin.png` | Gateway Overview |
