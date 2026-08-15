@@ -138,7 +138,17 @@ curl -sS http://127.0.0.1:4003/v1/models \
   -H "Authorization: Bearer local-grok-not-xai" | jq
 ```
 
+This box: both returned **200**. `grok-4-latest` routed to `grok-4.3`. Answers were `4` and `Paris`.
+
+![Two curls through the gateway: 4 and Paris](docs/shots/curl-run.png)
+
 Open **Analytics** and **Logs** on the admin UI. You want `CHAT` / `200` rows with provider `xai`. No key on those pages.
+
+This run: **$0.0044 / 623 tokens / 2 calls**.
+
+![agentgateway Analytics: $0.0044, 623 tokens, 2 calls](docs/shots/agw-ui.png)
+
+![agentgateway Logs: two CHAT 200 rows, grok-4-latest to grok-4.3, provider xai](docs/shots/agw-logs.png)
 
 ## Step 6: Point Grok Build at the gateway
 
@@ -198,7 +208,16 @@ Switch models in the TUI with `/model` or `grok -m agw`.
 | Real xAI key (mode 600, never committed) | `.secrets/xai.env` |
 | Grok Build custom model | `~/.grok/config.toml` |
 
-**Captures** — stills and clips live in [`docs/shots/`](docs/shots/) once a live run is captured. Nothing there is a real API key.
+**Captures** — all stills live in [`docs/shots/`](docs/shots/), keyed to the steps above:
+
+| File | What |
+| --- | --- |
+| `curl-run.png` | Two dummy-token curls: `4` and `Paris` |
+| `agw-ui.png` | Analytics — $0.0044 / 623 tokens / 2 calls |
+| `agw-logs.png` | Logs — two `CHAT` / `200` rows, `grok-4-latest` → `grok-4.3` |
+| `agw-admin.png` | Gateway Overview |
+
+Standalone only. No cluster screenshots. No real API key in any capture.
 
 Standalone first. No real API key in any capture.
 
