@@ -1,10 +1,14 @@
 # Grok Build + agentgateway
 
-Run **standalone agentgateway** in front of **Grok Build** (or any OpenAI-compatible client), so the client never sees your real xAI key.
+**Grok Build** is xAI's coding agent. It runs in your terminal, reads the repo, edits files, and shells out. Out of the box it talks straight to `api.x.ai` with a key sitting in `~/.grok` or an env var. Fine for one laptop. Ugly the moment you have more than one tool, more than one model, or you actually want to know what you spent.
 
-The client talks to `http://127.0.0.1:4003/v1` with a dummy token. The gateway is the only process that holds `XAI_API_KEY`, and it is where token counts, USD cost, and traces show up. This is the setup we actually ran on one box — no cluster required.
+**agentgateway** is the proxy in the middle. It speaks the OpenAI API, so Grok Build (and curl, Cursor, anything else) thinks it is talking to a normal `/v1` endpoint. Behind that single door it can send the call to Grok, to OpenAI, to a local vLLM box, or later to MCP servers. The client never holds the real key.
 
-The kind / passthrough runbook that used to live here is still at [docs/grok-passthrough-kind.md](docs/grok-passthrough-kind.md). That path forwards the client's own `Authorization` header. This README is the other pattern: dummy inbound token, real key only on the gateway.
+That is why the gateway matters. One place to **govern** who can call what, **route** traffic to the right model, **optimize** the path, and **analyze** tokens and spend. Analytics and Logs on the admin UI are not a nice-to-have. They are the point.
+
+This repo is the standalone version we actually ran on one machine. Grok Build or curl hits `http://127.0.0.1:4003/v1` with a dummy token. The gateway is the only process that has `XAI_API_KEY`. Token counts, USD, and traces show up there. No cluster required.
+
+The older kind runbook (client holds the key, gateway just forwards `Authorization`) is still at [docs/grok-passthrough-kind.md](docs/grok-passthrough-kind.md).
 
 ![Two dummy-token curls through the gateway](docs/shots/curl-run.gif)
 
