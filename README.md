@@ -204,7 +204,8 @@ Switch models in the TUI with `/model` or `grok -m agw`.
 | Gateway config (no secret) | [`agentgateway.yaml`](agentgateway.yaml) |
 | Gateway launcher | [`start-agw.sh`](start-agw.sh) |
 | Kind passthrough runbook | [`docs/grok-passthrough-kind.md`](docs/grok-passthrough-kind.md) |
-| Kubernetes (dummy-token pattern) | [`docs/kubernetes.md`](docs/kubernetes.md) |
+| Kubernetes manifests | [`k8s/`](k8s/) — see [`k8s/README.md`](k8s/README.md) |
+| Kubernetes walkthrough | [`docs/kubernetes.md`](docs/kubernetes.md) |
 | Real xAI key (mode 600, never committed) | `.secrets/xai.env` |
 | Grok Build custom model | `~/.grok/config.toml` |
 
@@ -223,6 +224,10 @@ Standalone first. No real API key in any capture.
 
 ## Next steps
 
-- **Kubernetes** — same dummy-token pattern, with a Secret instead of a mode-600 file. Walkthrough: [docs/kubernetes.md](docs/kubernetes.md).
+- **Kubernetes** — same dummy-token pattern, with a Secret instead of a mode-600 file. Manifests are in [`k8s/`](k8s/); the walkthrough is [docs/kubernetes.md](docs/kubernetes.md). Untested — we did not stand a cluster up for this repo.
+
+  ```bash
+  ./k8s/install.sh   # Gateway API + agentgateway charts, Secret, cost catalog, manifests
+  ```
 - **Kind passthrough** — client holds the key, gateway forwards `Authorization`. That is the older runbook: [docs/grok-passthrough-kind.md](docs/grok-passthrough-kind.md).
 - **MCP** — not wired in this first pass. Same gateway in the middle, later.
