@@ -6,15 +6,9 @@ Captures from the standalone box we actually ran. The [README](../../README.md) 
 
 | File | What |
 | --- | --- |
-| `grok-config.png` | `~/.grok/config.toml` — custom model `agw`, base URL `http://127.0.0.1:4003/v1`, dummy `env_key` |
-| `curl-run.png` | Two short curls through the gateway: `4` and `Paris` |
-| `agw-ui.png` | agentgateway Analytics http://127.0.0.1:14011/ui |
-| `agw-logs.png` | agentgateway Logs — `CHAT` / `200` rows, provider `xai` |
+| `curl-run.png` | Two dummy-token curls through `:4003` — `4` and `Paris` |
+| `agw-ui.png` | agentgateway Analytics http://127.0.0.1:14011/ui — $0.0044 / 623 tokens / 2 calls |
+| `agw-logs.png` | agentgateway Logs — two `CHAT` / `200` rows, `grok-4-latest` → `grok-4.3`, provider `xai` |
+| `agw-admin.png` | Gateway Overview — LLM enabled, MCP not enabled |
 
-## Clips
-
-| File | What |
-| --- | --- |
-| `agw-costs.gif` | Admin UI — Analytics and cost totals for the run |
-
-Stills land after we prove a live `200` through the gateway. Until then this folder is the reserved paths only.
+The README uses them in step order: curl proof → Analytics → Logs.
