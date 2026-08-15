@@ -1,0 +1,26 @@
+# yaml-language-server: $schema=https://agentgateway.dev/schema/config
+# Sample standalone config. No secrets.
+# XAI_API_KEY lives in the agentgateway process env only (sourced by start-agw.sh).
+
+config:
+  adminAddr: localhost:14011
+  statsAddr: "[::]:14032"
+  readinessAddr: "[::]:14033"
+  database:
+    url: "sqlite://./data.db?mode=rwc"
+  modelCatalog:
+  - file: ./costs/catalog.json
+  tracing:
+    otlpEndpoint: http://localhost:4317
+    randomSampling: true
+
+gateways:
+  default:
+    port: 4003
+
+llm:
+  models:
+  - name: "*"
+    provider: xai
+    params:
+      apiKey: "$XAI_API_KEY"
